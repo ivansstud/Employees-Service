@@ -31,17 +31,6 @@ public readonly struct Result
 	{
 		return Result<T>.Failure(error);
 	}
-
-	public bool TryGetError(out string error)
-	{
-		error = Error;
-		return IsFailure;
-	}
-
-	public Result<T> AsFailure<T>()
-	{
-		return Failure<T>(Error);
-	}
 }
 
 public readonly struct Result<T>
@@ -67,22 +56,6 @@ public readonly struct Result<T>
 
 	public static Result<T> Success(T value) => new(value);
 	public static Result<T> Failure(string error) => new(error);
-
-	public bool TryGetValue(out T value)
-	{
-		value = Value;
-		return IsSuccess;
-	}
-
-	public Result<TOther> AsFailure<TOther>()
-	{
-		return Result.Failure<TOther>(Error);
-	}
-
-	public Result AsFailure()
-	{
-		return Result.Failure(Error);
-	}
 
 	public static implicit operator Result<T>(T value) => Success(value);
 }

@@ -1,8 +1,17 @@
-﻿using EmployeesService.Api.Data.Repositories;
-using System.Data;
+﻿using System.Data;
 using System.Data.Common;
 
-namespace EmployeesService.Api.Data;
+namespace EmployeesService.Api.Data.Repositories;
+
+public interface IUnitOfWork : IDisposable
+{
+	IDbConnection Connection { get; }
+	IDbTransaction Transaction { get; }
+	IEmployeesRepositoty Employees { get; }
+	ICompaniesRepository Companies { get; }
+	Task CommitAsync(CancellationToken cancellationToken);
+	Task RollbackAsync(CancellationToken cancellationToken);
+}
 
 public class UnitOfWork : IUnitOfWork
 {

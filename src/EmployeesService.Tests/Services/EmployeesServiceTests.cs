@@ -1,0 +1,307 @@
+﻿using EmployeesService.Api.Data.Entities;
+using EmployeesService.Api.Data.Repositories;
+using EmployeesService.Api.Models.Requests;
+using Microsoft.Extensions.Logging;
+using Moq;
+
+namespace EmployeesService.Tests.Services;
+
+public class EmployeesServiceTests
+{
+	private readonly Mock<IEmployeesRepositoty> _employeesRepoMock;
+	private readonly Mock<ICompaniesRepository> _companiesRepoMock;
+	private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+	private readonly Mock<ILogger<Api.Services.EmployeesService>> _loggerMock;
+	private readonly Api.Services.EmployeesService _service;
+
+	public EmployeesServiceTests()
+	{
+		_employeesRepoMock = new Mock<IEmployeesRepositoty>();
+		_companiesRepoMock = new Mock<ICompaniesRepository>();
+		_unitOfWorkMock = new Mock<IUnitOfWork>();
+		_loggerMock = new Mock<ILogger<Api.Services.EmployeesService>>();
+
+		_unitOfWorkMock.Setup(u => u.Employees).Returns(_employeesRepoMock.Object);
+		_unitOfWorkMock.Setup(u => u.Companies).Returns(_companiesRepoMock.Object);
+
+		_service = new Api.Services.EmployeesService(_unitOfWorkMock.Object, _loggerMock.Object);
+	}
+
+	[Fact]
+	public async Task Create_ShouldReturnFailure_WhenCompanyDepartmentNotExists()
+	{
+		// Arrange
+		var request = new CreateEmployeeRequest
+		{
+			FirstName = "Ivan",
+			Surname = "Petrov",
+			Phone = "123",
+			CompanyId = 1,
+			DepartmentId = 1,
+			PassportType = "RF",
+			PassportNumber = "999999"
+		};
+		_companiesRepoMock
+			.Setup(r => r.ExistsWithDepartmentAsync(1, 1, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(false);
+
+		// Act
+		var result = await _service.Create(request, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal("Не удалось найти выбранный отдел", result.Error);
+	}
+
+	[Fact]
+	public async Task Create_ShouldReturnFailure_WhenEmployeeAlreadyExists()
+	{
+		// Arrange
+		var request = new CreateEmployeeRequest
+		{
+			FirstName = "Ivan",
+			Surname = "Petrov",
+			Phone = "123",
+			CompanyId = 1,
+			DepartmentId = 1,
+			PassportType = "RF",
+			PassportNumber = "999999"
+		};
+		_companiesRepoMock
+			.Setup(r => r.ExistsWithDepartmentAsync(1, 1, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(true);
+		_employeesRepoMock
+			.Setup(r => r.ExistsAsync(1, "999999", It.IsAny<CancellationToken>()))
+			.ReturnsAsync(true);
+
+		// Act
+		var result = await _service.Create(request, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal("Данный сотрудник уже существует в выбранном отделе", result.Error);
+	}
+
+	[Fact]
+	public async Task Create_ShouldReturnSuccess_WhenValid()
+	{
+		// Arrange
+		var request = new CreateEmployeeRequest
+		{
+			FirstName = "Ivan",
+			Surname = "Petrov",
+			Phone = "123",
+			CompanyId = 1,
+			DepartmentId = 1,
+			PassportType = "RF",
+			PassportNumber = "999999"
+		};
+		_companiesRepoMock
+			.Setup(r => r.ExistsWithDepartmentAsync(1, 1, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(true);
+		_employeesRepoMock
+			.Setup(r => r.ExistsAsync(1, "999999", It.IsAny<CancellationToken>()))
+			.ReturnsAsync(false);
+		_employeesRepoMock
+			.Setup(r => r.CreateAsync(It.IsAny<CreateEmployeeRequest>(), It.IsAny<CancellationToken>()))
+			.ReturnsAsync(42);
+
+		// Act
+		var result = await _service.Create(request, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsSuccess);
+		Assert.Equal(42, result.Value);
+		_unitOfWorkMock.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+	}
+
+	[Fact]
+	public async Task Create_ShouldReturnFailure_OnException()
+	{
+		// Arrange
+		var request = new CreateEmployeeRequest
+		{
+			FirstName = "Ivan",
+			Surname = "Petrov",
+			Phone = "123",
+			CompanyId = 1,
+			DepartmentId = 1,
+			PassportType = "RF",
+			PassportNumber = "999999"
+		};
+		_companiesRepoMock
+			.Setup(r => r.ExistsWithDepartmentAsync(1, 1, It.IsAny<CancellationToken>()))
+			.ThrowsAsync(new Exception("DB error"));
+
+		// Act
+		var result = await _service.Create(request, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal("При создании записи произошла ошибка", result.Error);
+	}
+
+	[Fact]
+	public async Task GetByDepartment_ShouldReturnMappedResponses()
+	{
+		// Arrange
+		var department = new Department { Id = 1, Name = "IT", Phone = "222" };
+		var employees = new List<Employee>
+	{
+		new Employee
+		{
+			Id = 1,
+			FirstName = "Ivan",
+			Surname = "Petrov",
+			Phone = "333",
+			CompanyId = 1,
+			DepartmentId = 1,
+			PassportType = "RF",
+			PassportNumber = "123456",
+			Department = department
+		}
+	};
+		_employeesRepoMock
+			.Setup(r => r.GetByDepartmentWithDepartmentAsync(1, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(employees);
+
+		// Act
+		var result = await _service.GetByDepartment(1, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsSuccess);
+		var emp = result.Value.First();
+		Assert.Equal("Ivan", emp.Name);
+		Assert.Equal("IT", emp.Department.Name);
+	}
+
+	[Fact]
+	public async Task GetByCompany_ShouldReturnMappedResponses()
+	{
+		// Arrange
+		var department = new Department { Id = 2, Name = "HR", Phone = "444" };
+		var employees = new List<Employee>
+	{
+		new Employee
+		{
+			Id = 2,
+			FirstName = "Anna",
+			Surname = "Smirnova",
+			Phone = "555",
+			CompanyId = 10,
+			DepartmentId = 2,
+			PassportType = "RF",
+			PassportNumber = "654321",
+			Department = department
+		}
+	};
+		_employeesRepoMock
+			.Setup(r => r.GetByCompanyWithDepartmentAsync(10, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(employees);
+
+		// Act
+		var result = await _service.GetByCompany(10, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsSuccess);
+		var emp = result.Value.First();
+		Assert.Equal("Anna", emp.Name);
+		Assert.Equal("HR", emp.Department.Name);
+	}
+
+	[Fact]
+	public async Task Update_ShouldFail_WhenAllPropertiesAreNull()
+	{
+		// Arrange
+		var request = new UpdateEmployeeRequest(null, null, null, null, null, null, null)
+		{
+			Id = 1
+		};
+
+		// Act
+		var result = await _service.Update(request, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal("Ничего не выбрано для обновления", result.Error);
+	}
+
+	[Fact]
+	public async Task Update_ShouldReturnFailure_WhenDepartmentNotFound()
+	{
+		// Arrange
+		var request = new UpdateEmployeeRequest(null, null, "111", 2, 1, null, null)
+		{
+			Id = 5
+		};
+		_employeesRepoMock
+			.Setup(r => r.GetCompanyId(5, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(1);
+		_companiesRepoMock
+			.Setup(r => r.ExistsWithDepartmentAsync(1, 2, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(false);
+
+		// Act
+		var result = await _service.Update(request, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal("Не удалось найти выбранный отдел", result.Error);
+	}
+
+	[Fact]
+	public async Task Update_ShouldReturnSuccess_WhenValid()
+	{
+		// Arrange
+		var request = new UpdateEmployeeRequest("Ivan", null, "777", 2, 1, "RF", "111")
+		{
+			Id = 3
+		};
+		_companiesRepoMock
+			.Setup(r => r.ExistsWithDepartmentAsync(1, 2, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(true);
+		_employeesRepoMock
+			.Setup(r => r.Update(request, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(1);
+
+		// Act
+		var result = await _service.Update(request, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsSuccess);
+		Assert.Equal(1, result.Value);
+		_unitOfWorkMock.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+	}
+
+	[Fact]
+	public async Task DeleteAsync_ShouldCommitAndReturnSuccess()
+	{
+		// Arrange
+		_employeesRepoMock
+			.Setup(r => r.DeleteAsync(1, It.IsAny<CancellationToken>()))
+			.Returns(Task.CompletedTask);
+
+		// Act
+		var result = await _service.DeleteAsync(1, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsSuccess);
+		_unitOfWorkMock.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+	}
+
+	[Fact]
+	public async Task DeleteAsync_ShouldReturnFailure_OnException()
+	{
+		// Arrange
+		_employeesRepoMock
+			.Setup(r => r.DeleteAsync(1, It.IsAny<CancellationToken>()))
+			.ThrowsAsync(new Exception("DB error"));
+
+		// Act
+		var result = await _service.DeleteAsync(1, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal("При удалении записи произошла ошибка", result.Error);
+	}
+}

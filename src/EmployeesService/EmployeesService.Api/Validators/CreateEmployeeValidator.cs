@@ -7,7 +7,7 @@ public class CreateEmployeeValidator : AbstractValidator<CreateEmployeeRequest>
 {
 	public CreateEmployeeValidator()
 	{
-		RuleFor(x => x.Name)
+		RuleFor(x => x.FirstName)
 			.NotEmpty().WithMessage("Имя обязательно для заполнения")
 			.MaximumLength(100).WithMessage("Имя не может превышать 100 символов");
 

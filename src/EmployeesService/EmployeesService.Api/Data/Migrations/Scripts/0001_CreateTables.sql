@@ -14,7 +14,7 @@ CREATE TABLE departments (
 
 CREATE TABLE employees (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
     surname VARCHAR(100) NOT NULL,
     phone VARCHAR(50),
     company_id INT NOT NULL,

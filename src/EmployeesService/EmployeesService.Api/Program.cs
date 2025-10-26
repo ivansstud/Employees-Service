@@ -1,5 +1,5 @@
-using EmployeesService.Api.Data;
 using EmployeesService.Api.Data.Migrations;
+using EmployeesService.Api.Data.Repositories;
 using EmployeesService.Api.Endpoints;
 using EmployeesService.Api.Services;
 using EmployeesService.Api.Validators;
