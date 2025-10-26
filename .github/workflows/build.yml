@@ -16,19 +16,16 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: 8.0.x
         
     - name: Restore dependencies
-      run: dotnet restore
-      
+      run: dotnet restore src/EmployeesService.sln
+
     - name: Build
-      run: dotnet build --no-restore --configuration Release
-      
+      run: dotnet build src/EmployeesService.sln --no-restore --configuration Release
+
     - name: Run Tests
       run: dotnet test src/EmployeesService.Tests/EmployeesService.Tests.csproj --no-build --configuration Release
-      
-    - name: Check project structure
-      run: ls -R
-      
+
     - name: Publish API
       run: dotnet publish src/EmployeesService.Api/EmployeesService.Api.csproj -c Release -o publish
