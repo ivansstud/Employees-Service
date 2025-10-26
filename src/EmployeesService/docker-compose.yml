@@ -1,0 +1,23 @@
+services:
+  employees-service.api:
+    image: ${DOCKER_REGISTRY-}employees-service.api
+    container_name: employees-service.api
+    build:
+      context: .
+      dockerfile: EmployeesService.Api/Dockerfile
+    ports:
+      - "8080"
+    depends_on:
+      - employees-service.db
+
+  employees-service.db:
+    image: postgres:latest
+    container_name: employees-service.db
+    environment:
+      - POSTGRES_DB=employees
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./.containers/employees-db:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
