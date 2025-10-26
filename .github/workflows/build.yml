@@ -22,10 +22,10 @@ jobs:
       run: dotnet restore src/EmployeesService.sln
 
     - name: Build
-      run: dotnet build src/EmployeesService.sln --no-restore --configuration Release
+      run: dotnet build src/EmployeesService/EmployeesService.sln --no-restore --configuration Release
 
     - name: Run Tests
       run: dotnet test src/EmployeesService.Tests/EmployeesService.Tests.csproj --no-build --configuration Release
 
     - name: Publish API
-      run: dotnet publish src/EmployeesService.Api/EmployeesService.Api.csproj -c Release -o publish
+      run: dotnet publish src/EmployeesService/EmployeesService.Api/EmployeesService.Api.csproj -c Release -o publish
