@@ -66,4 +66,5 @@ Swagger-документация доступна по адресу: [http://loc
 * FluentValidation для валидации запросов.
 * Проект тестов на xUnit для примера.
 * Serilog + OpenTelemetry + Seq для сбора и визуализации структурированных логов, доступных по адресу [http://localhost:8081](http://localhost:8081)  
-* База данных PostgreSQL 
+* База данных PostgreSQL
+* DbUp для миграций БД
