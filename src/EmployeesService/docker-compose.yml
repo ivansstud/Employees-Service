@@ -1,4 +1,24 @@
+version: '3.9'
+
 services:
+  employees-service.db:
+    image: postgres:latest
+    container_name: employees-service.db
+    environment:
+      POSTGRES_DB: employees
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./.containers/employees-db:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 5s
+
   employees-service.api:
     image: ${DOCKER_REGISTRY-}employees-service.api
     container_name: employees-service.api
@@ -6,18 +26,7 @@ services:
       context: .
       dockerfile: EmployeesService.Api/Dockerfile
     ports:
-      - "8080"
+      - "8080:8080"
     depends_on:
-      - employees-service.db
-
-  employees-service.db:
-    image: postgres:latest
-    container_name: employees-service.db
-    environment:
-      - POSTGRES_DB=employees
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    volumes:
-      - ./.containers/employees-db:/var/lib/postgresql/data
-    ports:
-      - 5433:5432
+      employees-service.db:
+        condition: service_healthy
