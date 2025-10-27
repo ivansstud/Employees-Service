@@ -9,10 +9,10 @@ namespace EmployeesService.Api.Services;
 
 public interface IEmployeesService
 {
-	Task<Result<IEnumerable<EmployeeResponse>>> GetByCompany(int companyId, CancellationToken cancellationToken);
-	Task<Result<IEnumerable<EmployeeResponse>>> GetByDepartment(int departmentId, CancellationToken cancellationToken);
-	Task<Result<int>> Create(CreateEmployeeRequest request, CancellationToken cancellationToken);
-	Task<Result<int>> Update(UpdateEmployeeRequest request, CancellationToken cancellationToken);
+	Task<Result<IEnumerable<EmployeeResponse>>> GetByCompanyAsync(int companyId, CancellationToken cancellationToken);
+	Task<Result<IEnumerable<EmployeeResponse>>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken);
+	Task<Result<int>> CreateAsync(CreateEmployeeRequest request, CancellationToken cancellationToken);
+	Task<Result<int>> UpdateAsync(UpdateEmployeeRequest request, CancellationToken cancellationToken);
 	Task<Result> DeleteAsync(int id, CancellationToken cancellationToken);
 }
 
@@ -23,7 +23,7 @@ public class EmployeesService(
 	private readonly IUnitOfWork _unitOfWork = unitOfWork;
 	private readonly ILogger<EmployeesService> _logger = logger;
 
-	public async Task<Result<IEnumerable<EmployeeResponse>>> GetByDepartment(int departmentId, CancellationToken cancellationToken)
+	public async Task<Result<IEnumerable<EmployeeResponse>>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken)
 	{
 		_logger.LogInformation("Начато получение сотрудников по отделу с id = {DepartmentId}", departmentId);
 
@@ -42,7 +42,7 @@ public class EmployeesService(
 		}
 	}
 
-	public async Task<Result<IEnumerable<EmployeeResponse>>> GetByCompany(int companyId, CancellationToken cancellationToken)
+	public async Task<Result<IEnumerable<EmployeeResponse>>> GetByCompanyAsync(int companyId, CancellationToken cancellationToken)
 	{
 		_logger.LogInformation("Начато получение сотрудников по компании с id = {CompanyId}", companyId);
 
@@ -61,7 +61,7 @@ public class EmployeesService(
 		}
 	}
 
-	public async Task<Result<int>> Create(CreateEmployeeRequest request, CancellationToken cancellationToken)
+	public async Task<Result<int>> CreateAsync(CreateEmployeeRequest request, CancellationToken cancellationToken)
 	{
 		_logger.LogInformation("Начато создание сотрудника");
 
@@ -99,7 +99,7 @@ public class EmployeesService(
 		}
 	}
 
-	public async Task<Result<int>> Update(UpdateEmployeeRequest request, CancellationToken cancellationToken)
+	public async Task<Result<int>> UpdateAsync(UpdateEmployeeRequest request, CancellationToken cancellationToken)
 	{
 		_logger.LogInformation("Начато обновление сотрудника");
 
@@ -114,7 +114,7 @@ public class EmployeesService(
 			{
 				int? companyId = request.CompanyId;
 
-				companyId ??= await _unitOfWork.Employees.GetCompanyId(request.Id, cancellationToken);
+				companyId ??= await _unitOfWork.Employees.GetCompanyIdAstnc(request.Id, cancellationToken);
 
 				bool isCompanyWithDepartmentExists = await _unitOfWork.Companies
 					.ExistsWithDepartmentAsync(companyId.Value, request.DepartmentId.Value, cancellationToken);
@@ -127,7 +127,7 @@ public class EmployeesService(
 				}
 			}
 
-			int rowsUpdated = await _unitOfWork.Employees.Update(request, cancellationToken);
+			int rowsUpdated = await _unitOfWork.Employees.UpdateAsync(request, cancellationToken);
 
 			await _unitOfWork.CommitAsync(cancellationToken);
 			_logger.LogInformation("Выполнено обновление сотрудника");

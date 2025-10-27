@@ -5,6 +5,9 @@ using EmployeesService.Api.Services;
 using EmployeesService.Api.Validators;
 using FluentValidation;
 using Npgsql;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
 using System.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +21,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
 builder.AddCors("AllowAll")
+	.AddOpenTelemetry()
+	.AddSerilog()
 	.AddUnitOfWork(connectionString)
 	.AddApplicationServices();
 
@@ -71,6 +76,31 @@ internal static class Startup
 	public static WebApplicationBuilder AddApplicationServices(this WebApplicationBuilder builder)
 	{
 		builder.Services.AddScoped<IEmployeesService, EmployeesService.Api.Services.EmployeesService>();
+		return builder;
+	}
+
+	public static WebApplicationBuilder AddOpenTelemetry(this WebApplicationBuilder builder)
+	{
+		builder.Services
+			.AddOpenTelemetry()
+			.ConfigureResource(resource => resource.AddService("Employees.Api"))
+			.WithTracing(tracing =>
+			{
+				tracing
+					.AddHttpClientInstrumentation()
+					.AddAspNetCoreInstrumentation();
+
+				tracing.AddOtlpExporter();
+			});
+		return builder;
+	}
+
+	public static WebApplicationBuilder AddSerilog(this WebApplicationBuilder builder)
+	{
+		builder.Host.UseSerilog((context, logConfig) =>
+		{
+			logConfig.ReadFrom.Configuration(context.Configuration);
+		});
 		return builder;
 	}
 }

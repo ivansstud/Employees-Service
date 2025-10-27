@@ -33,7 +33,7 @@ public class EmployeesServiceTests
 		// Arrange
 		var request = new CreateEmployeeRequest
 		{
-			FirstName = "Ivan",
+			Name = "Ivan",
 			Surname = "Petrov",
 			Phone = "123",
 			CompanyId = 1,
@@ -46,7 +46,7 @@ public class EmployeesServiceTests
 			.ReturnsAsync(false);
 
 		// Act
-		var result = await _service.Create(request, CancellationToken.None);
+		var result = await _service.CreateAsync(request, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsFailure);
@@ -59,7 +59,7 @@ public class EmployeesServiceTests
 		// Arrange
 		var request = new CreateEmployeeRequest
 		{
-			FirstName = "Ivan",
+			Name = "Ivan",
 			Surname = "Petrov",
 			Phone = "123",
 			CompanyId = 1,
@@ -75,7 +75,7 @@ public class EmployeesServiceTests
 			.ReturnsAsync(true);
 
 		// Act
-		var result = await _service.Create(request, CancellationToken.None);
+		var result = await _service.CreateAsync(request, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsFailure);
@@ -88,7 +88,7 @@ public class EmployeesServiceTests
 		// Arrange
 		var request = new CreateEmployeeRequest
 		{
-			FirstName = "Ivan",
+			Name = "Ivan",
 			Surname = "Petrov",
 			Phone = "123",
 			CompanyId = 1,
@@ -107,7 +107,7 @@ public class EmployeesServiceTests
 			.ReturnsAsync(42);
 
 		// Act
-		var result = await _service.Create(request, CancellationToken.None);
+		var result = await _service.CreateAsync(request, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
@@ -121,7 +121,7 @@ public class EmployeesServiceTests
 		// Arrange
 		var request = new CreateEmployeeRequest
 		{
-			FirstName = "Ivan",
+			Name = "Ivan",
 			Surname = "Petrov",
 			Phone = "123",
 			CompanyId = 1,
@@ -134,7 +134,7 @@ public class EmployeesServiceTests
 			.ThrowsAsync(new Exception("DB error"));
 
 		// Act
-		var result = await _service.Create(request, CancellationToken.None);
+		var result = await _service.CreateAsync(request, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsFailure);
@@ -166,7 +166,7 @@ public class EmployeesServiceTests
 			.ReturnsAsync(employees);
 
 		// Act
-		var result = await _service.GetByDepartment(1, CancellationToken.None);
+		var result = await _service.GetByDepartmentAsync(1, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
@@ -200,7 +200,7 @@ public class EmployeesServiceTests
 			.ReturnsAsync(employees);
 
 		// Act
-		var result = await _service.GetByCompany(10, CancellationToken.None);
+		var result = await _service.GetByCompanyAsync(10, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
@@ -219,7 +219,7 @@ public class EmployeesServiceTests
 		};
 
 		// Act
-		var result = await _service.Update(request, CancellationToken.None);
+		var result = await _service.UpdateAsync(request, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsFailure);
@@ -235,14 +235,14 @@ public class EmployeesServiceTests
 			Id = 5
 		};
 		_employeesRepoMock
-			.Setup(r => r.GetCompanyId(5, It.IsAny<CancellationToken>()))
+			.Setup(r => r.GetCompanyIdAstnc(5, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(1);
 		_companiesRepoMock
 			.Setup(r => r.ExistsWithDepartmentAsync(1, 2, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(false);
 
 		// Act
-		var result = await _service.Update(request, CancellationToken.None);
+		var result = await _service.UpdateAsync(request, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsFailure);
@@ -261,11 +261,11 @@ public class EmployeesServiceTests
 			.Setup(r => r.ExistsWithDepartmentAsync(1, 2, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(true);
 		_employeesRepoMock
-			.Setup(r => r.Update(request, It.IsAny<CancellationToken>()))
+			.Setup(r => r.UpdateAsync(request, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(1);
 
 		// Act
-		var result = await _service.Update(request, CancellationToken.None);
+		var result = await _service.UpdateAsync(request, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);

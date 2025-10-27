@@ -9,9 +9,9 @@ public interface IEmployeesRepositoty
 {
 	Task<IEnumerable<Employee>> GetByCompanyWithDepartmentAsync(int companyId, CancellationToken cancellationToken);
 	Task<IEnumerable<Employee>> GetByDepartmentWithDepartmentAsync(int departmentId, CancellationToken cancellationToken);
-	Task<int> GetCompanyId(int employeeId, CancellationToken cancellationToken);
+	Task<int> GetCompanyIdAstnc(int employeeId, CancellationToken cancellationToken);
 	Task<int> CreateAsync(CreateEmployeeRequest createModel, CancellationToken cancellationToken);
-	Task<int> Update(UpdateEmployeeRequest request, CancellationToken cancellationToken);
+	Task<int> UpdateAsync(UpdateEmployeeRequest request, CancellationToken cancellationToken);
 	Task<bool> ExistsAsync(int departmentId, string passportNumber, CancellationToken cancellationToken);
 	Task DeleteAsync(int id, CancellationToken cancellationToken);
 }
@@ -52,7 +52,7 @@ public class EmployeesRepositoty(IUnitOfWork unitOfWork) : IEmployeesRepositoty
 		);
 	}
 
-	public async Task<int> GetCompanyId(int employeeId, CancellationToken cancellationToken)
+	public async Task<int> GetCompanyIdAstnc(int employeeId, CancellationToken cancellationToken)
 	{
 		return await _unitOfWork.Connection.ExecuteScalarAsync<int>(new CommandDefinition(
 			commandText: @"
@@ -104,11 +104,11 @@ public class EmployeesRepositoty(IUnitOfWork unitOfWork) : IEmployeesRepositoty
 				INSERT INTO employees 
 					(first_name, surname, phone, company_id, department_id, passport_type, passport_number)
 				VALUES
-					(@FirstName, @Surname, @Phone, @CompanyId, @DepartmentId, @PassportType, @PassportNumber)
+					(@Name, @Surname, @Phone, @CompanyId, @DepartmentId, @PassportType, @PassportNumber)
 				RETURNING id;",
 			parameters: new
 			{
-				request.FirstName,
+				request.Name,
 				request.Surname,
 				request.Phone,
 				request.CompanyId,
@@ -121,13 +121,13 @@ public class EmployeesRepositoty(IUnitOfWork unitOfWork) : IEmployeesRepositoty
 		));
 	}
 
-	public async Task<int> Update(UpdateEmployeeRequest request, CancellationToken cancellationToken)
+	public async Task<int> UpdateAsync(UpdateEmployeeRequest request, CancellationToken cancellationToken)
 	{
 		List<string> updates = [];
 		DynamicParameters parameters = new();
 
 		parameters.Add("Id", request.Id);
-		parameters.AddUpdateParameterIfNotNull(updates, "first_name", "FirstName", request.FirstName);
+		parameters.AddUpdateParameterIfNotNull(updates, "first_name", "Name", request.Name);
 		parameters.AddUpdateParameterIfNotNull(updates, "surname", "Surname", request.Surname);
 		parameters.AddUpdateParameterIfNotNull(updates, "phone", "Phone", request.Phone);
 		parameters.AddUpdateParameterIfNotNull(updates, "company_id", "CompanyId", request.CompanyId);

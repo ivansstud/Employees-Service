@@ -29,7 +29,7 @@ public class EmployeesEndpoints
 		IEmployeesService employeesService,
 		CancellationToken cancellationToken)
 	{
-		var result = await employeesService.GetByCompany(id, cancellationToken);
+		var result = await employeesService.GetByCompanyAsync(id, cancellationToken);
 
 		if (result.IsFailure)
 		{
@@ -44,7 +44,7 @@ public class EmployeesEndpoints
 		IEmployeesService employeesService,
 		CancellationToken cancellationToken)
 	{
-		var result = await employeesService.GetByDepartment(id, cancellationToken);
+		var result = await employeesService.GetByDepartmentAsync(id, cancellationToken);
 
 		if (result.IsFailure)
 		{
@@ -74,7 +74,7 @@ public class EmployeesEndpoints
 		IEmployeesService employeesService,
 		CancellationToken cancellationToken)
 	{
-		var result = await employeesService.Create(request, cancellationToken);
+		var result = await employeesService.CreateAsync(request, cancellationToken);
 
 		if (result.IsFailure)
 		{
@@ -91,7 +91,7 @@ public class EmployeesEndpoints
 		CancellationToken cancellationToken)
 	{
 		request.Id = id;
-		var result = await employeesService.Update(request, cancellationToken);
+		var result = await employeesService.UpdateAsync(request, cancellationToken);
 
 		if (result.IsFailure)
 			return Results.BadRequest(result);

@@ -3,7 +3,7 @@
 namespace EmployeesService.Api.Models.Requests;
 
 public record UpdateEmployeeRequest(
-	string? FirstName,
+	string? Name,
 	string? Surname,
 	string? Phone,
 	int? DepartmentId,

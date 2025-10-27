@@ -7,9 +7,9 @@ public class UpdateEmployeeValidator : AbstractValidator<UpdateEmployeeRequest>
 {
 	public UpdateEmployeeValidator()
 	{
-		When(x => x.FirstName != null, () =>
+		When(x => x.Name != null, () =>
 		{
-			RuleFor(x => x.FirstName)
+			RuleFor(x => x.Name)
 				.NotEmpty().WithMessage("Имя обязательно для заполнения")
 				.MaximumLength(100).WithMessage("Имя не может превышать 100 символов");
 		});

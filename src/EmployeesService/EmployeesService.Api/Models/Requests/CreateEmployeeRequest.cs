@@ -2,7 +2,7 @@
 
 public class CreateEmployeeRequest
 {
-	public required string FirstName { get; set; }
+	public required string Name { get; set; }
 	public required string Surname { get; set; }
 	public required string Phone { get; set; }
 	public int CompanyId { get; set; }
