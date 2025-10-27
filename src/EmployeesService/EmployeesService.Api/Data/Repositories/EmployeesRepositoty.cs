@@ -127,13 +127,13 @@ public class EmployeesRepositoty(IUnitOfWork unitOfWork) : IEmployeesRepositoty
 		DynamicParameters parameters = new();
 
 		parameters.Add("Id", request.Id);
-		parameters.AddUpdateParameterIfNotNull(updates, "first_name", "Name", request.Name);
-		parameters.AddUpdateParameterIfNotNull(updates, "surname", "Surname", request.Surname);
-		parameters.AddUpdateParameterIfNotNull(updates, "phone", "Phone", request.Phone);
-		parameters.AddUpdateParameterIfNotNull(updates, "company_id", "CompanyId", request.CompanyId);
-		parameters.AddUpdateParameterIfNotNull(updates, "department_id", "DepartmentId", request.DepartmentId);
-		parameters.AddUpdateParameterIfNotNull(updates, "passport_type", "PassportType", request.PassportType);
-		parameters.AddUpdateParameterIfNotNull(updates, "passport_number", "PassportNumber", request.PassportNumber);
+		parameters.AddUpdateParameterIfNotNull(updates, "first_name", nameof(request.Name), request.Name);
+		parameters.AddUpdateParameterIfNotNull(updates, "surname", nameof(request.Surname), request.Surname);
+		parameters.AddUpdateParameterIfNotNull(updates, "phone", nameof(request.Phone), request.Phone);
+		parameters.AddUpdateParameterIfNotNull(updates, "company_id", nameof(request.CompanyId), request.CompanyId);
+		parameters.AddUpdateParameterIfNotNull(updates, "department_id", nameof(request.DepartmentId), request.DepartmentId);
+		parameters.AddUpdateParameterIfNotNull(updates, "passport_type", nameof(request.PassportType), request.PassportType);
+		parameters.AddUpdateParameterIfNotNull(updates, "passport_number", nameof(request.PassportNumber), request.PassportNumber);
 
 		return await _unitOfWork.Connection.ExecuteAsync(new CommandDefinition(
 			commandText: $"UPDATE employees SET {string.Join(", ", updates)} WHERE id = @Id;",
