@@ -1,6 +1,7 @@
 ﻿using EmployeesService.Api.Data.Entities;
 using EmployeesService.Api.Data.Repositories;
 using EmployeesService.Api.Models.Requests;
+using EmployeesService.Api.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -18,13 +19,14 @@ public class EmployeesServiceTests
 	{
 		_employeesRepoMock = new Mock<IEmployeesRepositoty>();
 		_companiesRepoMock = new Mock<ICompaniesRepository>();
+		var cacheMock = new Mock<IEmployeesCacheService>();
 		_unitOfWorkMock = new Mock<IUnitOfWork>();
 		_loggerMock = new Mock<ILogger<Api.Services.EmployeesService>>();
 
 		_unitOfWorkMock.Setup(u => u.Employees).Returns(_employeesRepoMock.Object);
 		_unitOfWorkMock.Setup(u => u.Companies).Returns(_companiesRepoMock.Object);
 
-		_service = new Api.Services.EmployeesService(_unitOfWorkMock.Object, _loggerMock.Object);
+		_service = new Api.Services.EmployeesService(_unitOfWorkMock.Object, cacheMock.Object, _loggerMock.Object);
 	}
 
 	[Fact]

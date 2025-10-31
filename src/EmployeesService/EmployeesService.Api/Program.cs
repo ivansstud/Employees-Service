@@ -1,6 +1,7 @@
 using EmployeesService.Api.Data.Migrations;
 using EmployeesService.Api.Data.Repositories;
 using EmployeesService.Api.Endpoints;
+using EmployeesService.Api.Models.Options;
 using EmployeesService.Api.Services;
 using EmployeesService.Api.Validators;
 using FluentValidation;
@@ -12,7 +13,7 @@ using System.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string connectionString = builder.Configuration.GetConnectionString("Default")
+string connectionString = builder.Configuration.GetConnectionString("Database")
     ?? throw new Exception("Строка подключения к базе данных не установлена");
 
 builder.Services.AddEndpointsApiExplorer();
@@ -21,10 +22,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
 builder.AddCors("AllowAll")
-	.AddOpenTelemetry()
+	.AddOpenTelemetry("Employees.Api")
 	.AddSerilog()
 	.AddUnitOfWork(connectionString)
-	.AddApplicationServices();
+	.AddApplicationServices()
+	.AddCaching();
 
 var app = builder.Build();
 
@@ -79,18 +81,20 @@ internal static class Startup
 		return builder;
 	}
 
-	public static WebApplicationBuilder AddOpenTelemetry(this WebApplicationBuilder builder)
+	public static WebApplicationBuilder AddOpenTelemetry(this WebApplicationBuilder builder, string appName)
 	{
 		builder.Services
 			.AddOpenTelemetry()
-			.ConfigureResource(resource => resource.AddService("Employees.Api"))
+			.ConfigureResource(resource => resource.AddService(appName))
 			.WithTracing(tracing =>
 			{
 				tracing
 					.AddHttpClientInstrumentation()
 					.AddAspNetCoreInstrumentation();
 
-				tracing.AddOtlpExporter();
+				tracing
+					.AddOtlpExporter()
+					.AddNpgsql();
 			});
 		return builder;
 	}
@@ -101,6 +105,21 @@ internal static class Startup
 		{
 			logConfig.ReadFrom.Configuration(context.Configuration);
 		});
+		return builder;
+	}
+
+	public static WebApplicationBuilder AddCaching(this WebApplicationBuilder builder)
+	{
+		builder.Services.Configure<EmployeesCachingOptions>(builder.Configuration.GetSection(EmployeesCachingOptions.Section));
+
+		builder.Services.AddStackExchangeRedisCache(options =>
+		{
+			options.Configuration = builder.Configuration.GetConnectionString("Redis");
+		});
+
+		builder.Services.AddScoped<IRedisCachingService, RedisCachingService>();
+		builder.Services.AddScoped<IEmployeesCacheService, EmployeesCacheService>();
+
 		return builder;
 	}
 }

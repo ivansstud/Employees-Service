@@ -18,9 +18,11 @@ public interface IEmployeesService
 
 public class EmployeesService(
 	IUnitOfWork unitOfWork,
+	IEmployeesCacheService cache,
 	ILogger<EmployeesService> logger) : IEmployeesService
 {
 	private readonly IUnitOfWork _unitOfWork = unitOfWork;
+	private readonly IEmployeesCacheService _cache = cache;
 	private readonly ILogger<EmployeesService> _logger = logger;
 
 	public async Task<Result<IEnumerable<EmployeeResponse>>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken)
@@ -29,10 +31,20 @@ public class EmployeesService(
 
 		try
 		{
+			IEnumerable<EmployeeResponse>? cachedEmployees = await _cache.GetByDepartmentAsync(departmentId, cancellationToken);
+
+			if (cachedEmployees is not null)
+			{
+				_logger.LogInformation("Сотрудники по отделу с id = {DepartmentId} получены из кеша", departmentId);
+				return Result.Success(cachedEmployees);
+			}
+
 			IEnumerable<Employee> employees = await _unitOfWork.Employees.GetByDepartmentWithDepartmentAsync(departmentId, cancellationToken);
 			IEnumerable<EmployeeResponse> employeesResponse = employees.Select(x => x.ToResponse());
 
-			_logger.LogInformation("Сотрудники по отделу с id = {DepartmentId} успешно получены", departmentId);
+			await _cache.SetByDepartmentAsync(departmentId, employeesResponse, cancellationToken);
+
+			_logger.LogInformation("Сотрудники по отделу с id = {DepartmentId} успешно получены из БД и закешированы", departmentId);
 			return Result.Success(employeesResponse);
 		}
 		catch (Exception ex)
@@ -48,11 +60,21 @@ public class EmployeesService(
 
 		try
 		{
-			IEnumerable<Employee> employees = await _unitOfWork.Employees.GetByCompanyWithDepartmentAsync(companyId, cancellationToken);
-			IEnumerable<EmployeeResponse> employeesSersponse = employees.Select(x => x.ToResponse());
+			IEnumerable<EmployeeResponse>? cachedEmployees = await _cache.GetByCompanyAsync(companyId, cancellationToken);
 
-			_logger.LogInformation("Сотрудники по компании с id = {CompanyId} успешно получены", companyId);
-			return Result.Success(employeesSersponse);
+			if (cachedEmployees is not null)
+			{
+				_logger.LogInformation("Сотрудники по компании с id = {CompanyId} получены из кеша", companyId);
+				return Result.Success(cachedEmployees);
+			}
+
+			IEnumerable<Employee> employees = await _unitOfWork.Employees.GetByCompanyWithDepartmentAsync(companyId, cancellationToken);
+			IEnumerable<EmployeeResponse> employeesResponse = employees.Select(x => x.ToResponse()).ToList();
+
+			await _cache.SetByCompanyAsync(companyId, employeesResponse, cancellationToken);
+
+			_logger.LogInformation("Сотрудники по компании с id = {CompanyId} успешно получены из БД и закешированы", companyId);
+			return Result.Success(employeesResponse);
 		}
 		catch (Exception ex)
 		{
@@ -132,7 +154,7 @@ public class EmployeesService(
 			await _unitOfWork.CommitAsync(cancellationToken);
 			_logger.LogInformation("Выполнено обновление сотрудника");
 
-			return Result.Success(rowsUpdated);
+			return rowsUpdated;
 		}
 		catch (Exception ex)
 		{
