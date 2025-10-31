@@ -68,3 +68,4 @@ Swagger-документация доступна по адресу: [http://loc
 * Serilog + OpenTelemetry + Seq для сбора и визуализации структурированных логов, доступных по адресу [http://localhost:8081](http://localhost:8081)  
 * База данных PostgreSQL
 * DbUp для миграций БД
+* Redis для кеширования ответов
